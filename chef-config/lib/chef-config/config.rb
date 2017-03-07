@@ -4,7 +4,7 @@
 # Author:: AJ Christensen (<aj@chef.io>)
 # Author:: Mark Mzyk (<mmzyk@chef.io>)
 # Author:: Kyle Goodwin (<kgoodwin@primerevenue.com>)
-# Copyright:: Copyright 2008-2016, Chef Software Inc.
+# Copyright:: Copyright 2008-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -714,6 +714,7 @@ module ChefConfig
       default :ssh_user, nil
       default :ssh_attribute, nil
       default :ssh_gateway, nil
+      default :ssh_gateway_identity, nil
       default :bootstrap_version, nil
       default :bootstrap_proxy, nil
       default :bootstrap_template, nil
@@ -824,13 +825,6 @@ module ChefConfig
     # (leading to many confusing 403 errors on template/cookbook_file resources).
     #
     default :no_lazy_load, true
-
-    # Default for the chef_gem compile_time attribute.  Nil is the same as true but will emit
-    # warnings on every use of chef_gem prompting the user to be explicit.  If the user sets this to
-    # true then the user will get backcompat behavior but with a single nag warning that cookbooks
-    # may break with this setting in the future.  The false setting is the recommended setting and
-    # will become the default.
-    default :chef_gem_compile_time, nil
 
     # A whitelisted array of attributes you want sent over the wire when node
     # data is saved.
@@ -1052,12 +1046,6 @@ module ChefConfig
     default :ruby_encoding, Encoding::UTF_8
 
     default :rubygems_url, "https://rubygems.org"
-
-    # This controls the behavior of resource cloning (and CHEF-3694 warnings).  For Chef < 12 the behavior
-    # has been that this is 'true', in Chef 13 this will change to false.  Setting this to 'true' in Chef
-    # 13 is not a viable or supported migration strategy since Chef 13 community cookbooks will be expected
-    # to break with this setting set to 'true'.
-    default :resource_cloning, true
 
     # If installed via an omnibus installer, this gives the path to the
     # "embedded" directory which contains all of the software packaged with
