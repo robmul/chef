@@ -58,8 +58,9 @@ class Chef
 
     def resolve
       maybe_explicit_provider(resource) ||
+        maybe_custom_resource(resource) ||
         maybe_dynamic_provider_resolution(resource, action) ||
-        maybe_chef_platform_lookup(resource)
+        raise(Chef::Exceptions::ProviderNotFound, "Cannot find a provider for #{resource} on #{node["platform"]} version #{node["platform_version"]}")
     end
 
     # Does NOT call provides? on the resource (it is assumed this is being
@@ -105,10 +106,14 @@ class Chef
       end
     end
 
+    # if its a custom resource, just grab the action class
+    def maybe_custom_resource(resource)
+      resource.class.action_class if resource.class.custom_resource?
+    end
+
     # if resource.provider is set, just return one of those objects
     def maybe_explicit_provider(resource)
-      return nil unless resource.provider
-      resource.provider
+      resource.provider if resource.provider
     end
 
     # try dynamically finding a provider based on querying the providers to see what they support
@@ -126,11 +131,6 @@ class Chef
       handler
     end
 
-    # try the old static lookup of providers by platform
-    def maybe_chef_platform_lookup(resource)
-      Chef::Platform.find_provider_for_node(node, resource)
-    end
-
     def priority_map
       Chef.provider_priority_map
     end
@@ -142,31 +142,5 @@ class Chef
     def overrode_provides?(handler)
       handler.method(:provides?).owner != Chef::Provider.method(:provides?).owner
     end
-
-    module Deprecated
-      # return a deterministically sorted list of Chef::Provider subclasses
-      def providers
-        @providers ||= Chef::Provider.descendants
-      end
-
-      def enabled_handlers
-        @enabled_handlers ||= begin
-          handlers = super
-          if handlers.empty?
-            # Look through all providers, and find ones that return true to provides.
-            # Don't bother with ones that don't override provides?, since they
-            # would have been in enabled_handlers already if that were so. (It's a
-            # perf concern otherwise.)
-            handlers = providers.select { |handler| overrode_provides?(handler) && handler.provides?(node, resource) }
-            handlers.each do |handler|
-              message = "#{handler}.provides? returned true when asked if it provides DSL #{resource.resource_name}, but provides #{resource.resource_name.inspect} was never called!  In Chef 13, this will break: you must call provides to mark the names you provide, even if you also override provides? yourself."
-              Chef.deprecated(:custom_resource, message)
-            end
-          end
-          handlers
-        end
-      end
-    end
-    prepend Deprecated
   end
 end

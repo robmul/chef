@@ -34,6 +34,7 @@ Maintainers for the Chef client, Ohai, mixlibs, ChefDK, ChefSpec, Foodcritic, ch
       lieutenant = "thommay"
 
       maintainers = [
+        "adamleff",
         "btm",
         "coderanger",
         "danielsdeleo",
@@ -51,7 +52,8 @@ Maintainers for the Chef client, Ohai, mixlibs, ChefDK, ChefSpec, Foodcritic, ch
         "stevendanna",
         "tas50",
         "tduffield",
-        "tyler-ball"
+        "tyler-ball",
+        "itmustbejj"
       ]
 
     [Org.Components.Provisioning]
@@ -136,7 +138,8 @@ The specific components of Chef related to a given platform - including (but not
         lieutenant = "jtimberman"
 
         maintainers = [
-          "tyler-ball"
+          "tyler-ball",
+          "mikedodge04"
         ]
 
       [Org.Components.Subsystems.Debian]
@@ -222,6 +225,10 @@ The specific components of Chef related to a given platform - including (but not
   [people.adamhjk]
     Name = "Adam Jacob"
     GitHub = "adamhjk"
+
+  [people.adamleff]
+    Name = "Adam Leff"
+    GitHub = "adamleff"
 
   [people.Aevin1387]
     Name = "Cory Stephenson"
@@ -359,3 +366,15 @@ The specific components of Chef related to a given platform - including (but not
   [people.tduffield]
     Name = "Tom Duffield"
     GitHub = "tduffield"
+
+  [people.mikedodge04]
+    Name = "mikedodge04"
+    GitHub = "mikedodge04"
+    Twitter = "mikedodge04"
+    IRC = "mikedodge04"
+
+  [people.itmustbejj]
+    Name = "Josh Hudson"
+    GitHub = "itmustbejj"
+    Twitter = "itmustbejj"
+    IRC = "itmustbejj"

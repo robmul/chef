@@ -1,5 +1,5 @@
 #
-# Copyright:: Copyright (c) 2016 Chef Software Inc.
+# Copyright:: Copyright (c) 2016-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ OMNIBUS_OVERRIDES = {
   # Lower level library pins
   ## according to comment in omnibus-sw, latest versions don't work on solaris
   # https://github.com/chef/omnibus-software/blob/aefb7e79d29ca746c3f843673ef5e317fa3cba54/config/software/libtool.rb#L23
-  :bundler => "1.12.5", # until we figure out how to work with 1.13.0
+  :bundler => "1.14.6",
   "libffi" => "3.2.1",
   "libiconv" => "1.14",
   "liblzma" => "5.2.2",
@@ -33,7 +33,7 @@ OMNIBUS_OVERRIDES = {
   "makedepend" => "1.0.5",
   "ncurses" => "5.9",
   "pkg-config-lite" => "0.28-1",
-  "ruby" => "2.3.1",
+  "ruby" => "2.4.1",
   # Leave dev-kit pinned to 4.5 on 32-bit, because 4.7 is 20MB larger and we don't want
   # to unnecessarily make the client any fatter. (Since it's different between
   # 32 and 64, we have to do it in the project file still.)
@@ -86,6 +86,8 @@ ACCEPTABLE_OUTDATED_GEMS = [
   "github_changelog_generator", # we manage this independent of the rubygem
   "cheffish", # 5.0.0 breaks chef-provisioning
   "net-ssh-gateway", # chef-provisiong and test-kitchen have ~> 1.2 constraint
+  "mixlib-install", # dunno why
+  "thor", # berks
 ]
 
 #
@@ -108,7 +110,7 @@ GEMS_ALLOWED_TO_FLOAT = [
 # our test phase a lot easier.
 #
 INSTALL_WITHOUT_GROUPS = %w{
-  changelog
+  ci
   development
   docgen
   guard

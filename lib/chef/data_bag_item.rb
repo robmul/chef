@@ -75,6 +75,7 @@ class Chef
     end
 
     def raw_data=(new_data)
+      new_data = Mash.new(new_data)
       unless new_data.respond_to?(:[]) && new_data.respond_to?(:keys)
         raise Exceptions::ValidationFailed, "Data Bag Items must contain a Hash or Mash!"
       end
@@ -132,17 +133,11 @@ class Chef
       item = new
       item.data_bag(h.delete("data_bag")) if h.key?("data_bag")
       if h.key?("raw_data")
-        item.raw_data = Mash.new(h["raw_data"])
+        item.raw_data = h["raw_data"]
       else
         item.raw_data = h
       end
       item
-    end
-
-    # Create a Chef::DataBagItem from JSON
-    def self.json_create(o)
-      Chef.deprecated(:json_auto_inflate, "Auto inflation of JSON data is deprecated. Please use Chef::DataBagItem#from_hash")
-      from_hash(o)
     end
 
     # Load a Data Bag Item by name via either the RESTful API or local data_bag_path if run in solo mode

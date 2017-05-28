@@ -27,7 +27,7 @@ class Chef
       identity_attr :label
 
       default_action :create
-      allowed_actions :create, :create_if_missing, :delete, :enable, :disable
+      allowed_actions :create, :create_if_missing, :delete, :enable, :disable, :restart
 
       property :label, String, default: lazy { name }, identity: true
       property :backup, [Integer, FalseClass]
@@ -114,7 +114,7 @@ class Chef
       property :ld_group, String
       property :limit_load_from_hosts, Array
       property :limit_load_to_hosts, Array
-      property :limit_load_to_session_type, Array
+      property :limit_load_to_session_type, [ Array, String ]
       property :low_priority_io, [ TrueClass, FalseClass ]
       property :mach_services, Hash
       property :nice, Integer
@@ -139,18 +139,6 @@ class Chef
       property :wait_for_debugger, [ TrueClass, FalseClass ]
       property :watch_paths, Array
       property :working_directory, String
-
-      # hash is an instance method on Object and needs to return a Fixnum.
-      def hash(arg = nil)
-        Chef.deprecated(:launchd_hash_property, "Property `hash` on the `launchd` resource has changed to `plist_hash`." \
-          "Please use `plist_hash` instead. This will raise an exception in Chef 13.")
-
-        set_or_return(
-          :plist_hash,
-          arg,
-          :kind_of => Hash
-        )
-      end
     end
   end
 end

@@ -1,6 +1,6 @@
 #
 # Author:: Thom May (<thom@chef.io>)
-# Copyright:: Copyright (c) 2016 Chef Software, Inc.
+# Copyright:: Copyright (c) 2016-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,6 @@ require "chef/mixin/which"
 class Chef
   class Provider
     class AptUpdate < Chef::Provider
-      use_inline_resources
-
       extend Chef::Mixin::Which
 
       provides :apt_update do
@@ -33,10 +31,6 @@ class Chef
 
       APT_CONF_DIR = "/etc/apt/apt.conf.d"
       STAMP_DIR = "/var/lib/apt/periodic"
-
-      def whyrun_supported?
-        true
-      end
 
       def load_current_resource
       end

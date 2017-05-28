@@ -28,6 +28,7 @@ To mention the team, use @chef/client-core
 
 ### Maintainers
 
+* [Adam Leff](https://github.com/adamleff)
 * [Bryan McLellan](https://github.com/btm)
 * [Noah Kantrowitz](https://github.com/coderanger)
 * [Daniel DeLeo](https://github.com/danielsdeleo)
@@ -46,6 +47,7 @@ To mention the team, use @chef/client-core
 * [Tim Smith](https://github.com/tas50)
 * [Tom Duffield](https://github.com/tduffield)
 * [Tyler Ball](https://github.com/tyler-ball)
+* [Josh Hudson](https://github.com/itmustbejj)
 
 ## Chef Provisioning
 
@@ -143,6 +145,7 @@ To mention the team, use @chef/client-os-x
 ### Maintainers
 
 * [Tyler Ball](https://github.com/tyler-ball)
+* [mikedodge04](https://github.com/mikedodge04)
 
 ## Debian
 

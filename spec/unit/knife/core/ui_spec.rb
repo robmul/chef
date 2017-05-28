@@ -3,7 +3,7 @@
 # Author:: Tim Hinderliter (<tim@chef.io>)
 # Author:: Daniel DeLeo (<dan@chef.io>)
 # Author:: John Keiser (<jkeiser@chef.io>)
-# Copyright:: Copyright 2008-2016, Chef Software Inc.
+# Copyright:: Copyright 2008-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,19 +31,26 @@ describe Chef::Knife::UI do
       :field_separator => ".",
     }
     @ui = Chef::Knife::UI.new(@out, @err, @in, @config)
-    Chef::Config[:treat_deprecation_warnings_as_errors] = false
+  end
+
+  class TestObject < OpenStruct
+    def self.from_hash(hsh)
+      new(hsh)
+    end
   end
 
   describe "edit" do
     ruby_for_json = { "foo" => "bar" }
+    ruby_from_json = TestObject.from_hash(ruby_for_json)
     json_from_ruby = "{\n  \"foo\": \"bar\"\n}"
     json_from_editor = "{\n  \"bar\": \"foo\"\n}"
-    ruby_from_editor = { "bar" => "foo" }
+    ruby_from_editor = TestObject.from_hash({ "bar" => "foo" })
     my_editor = "veeeye"
     temp_path = "/tmp/bar/baz"
 
-    let(:subject) { @ui.edit_data(ruby_for_json, parse_output) }
+    let(:subject) { @ui.edit_data(ruby_for_json, parse_output, object_class: klass) }
     let(:parse_output) { false }
+    let(:klass) { nil }
 
     context "when editing is disabled" do
       before do
@@ -57,17 +64,18 @@ describe Chef::Knife::UI do
       end
       context "when parse_output is true" do
         let(:parse_output) { true }
+        let(:klass) { TestObject }
         it "returns a ruby object" do
-          expect(subject).to eql(ruby_for_json)
+          expect(subject).to eql(ruby_from_json)
         end
-
-        it "gives a deprecation error" do
-          Chef::Config[:treat_deprecation_warnings_as_errors] = true
-          expect { subject }.to raise_error Chef::Exceptions::DeprecatedFeatureError,
-            /Auto inflation of JSON data is deprecated./
+        context "but no object class is provided" do
+          let(:klass) { nil }
+          it "raises an error" do
+            expect { subject }.to raise_error ArgumentError,
+              /Please pass in the object class to hydrate or use #edit_hash/
+          end
         end
       end
-
     end
 
     context "when editing is enabled" do
@@ -94,6 +102,7 @@ describe Chef::Knife::UI do
         end
         context "when parse_output is true" do
           let(:parse_output) { true }
+          let(:klass) { TestObject }
           it "returns an edited ruby object" do
             expect(subject).to eql(ruby_from_editor)
           end
@@ -145,6 +154,7 @@ describe Chef::Knife::UI do
 
         context "when parse_output is true" do
           let(:parse_output) { true }
+          let(:klass) { TestObject }
           it "returns an edited ruby object" do
             expect(subject).to eql(ruby_from_editor)
           end

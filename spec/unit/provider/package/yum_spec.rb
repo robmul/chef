@@ -278,31 +278,31 @@ describe Chef::Provider::Package::Yum do
     end
 
     it "should flush the cache if :before is true" do
-      allow(@new_resource).to receive(:flush_cache).and_return({ :after => false, :before => true })
+      @new_resource.flush_cache({ :after => false, :before => true })
       expect(@yum_cache).to receive(:reload).once
       @provider.load_current_resource
     end
 
     it "should flush the cache if :before is false" do
-      allow(@new_resource).to receive(:flush_cache).and_return({ :after => false, :before => false })
+      @new_resource.flush_cache({ :after => false, :before => false })
       expect(@yum_cache).not_to receive(:reload)
       @provider.load_current_resource
     end
 
     it "should detect --enablerepo or --disablerepo when passed among options, collect them preserving order and notify the yum cache" do
-      allow(@new_resource).to receive(:options).and_return("--stuff --enablerepo=foo --otherthings --disablerepo=a,b,c  --enablerepo=bar")
+      @new_resource.options("--stuff --enablerepo=foo --otherthings --disablerepo=a,b,c  --enablerepo=bar")
       expect(@yum_cache).to receive(:enable_extra_repo_control).with("--enablerepo=foo --disablerepo=a,b,c --enablerepo=bar")
       @provider.load_current_resource
     end
 
     it "should let the yum cache know extra repos are disabled if --enablerepo or --disablerepo aren't among options" do
-      allow(@new_resource).to receive(:options).and_return("--stuff --otherthings")
+      @new_resource.options("--stuff --otherthings")
       expect(@yum_cache).to receive(:disable_extra_repo_control)
       @provider.load_current_resource
     end
 
     it "should let the yum cache know extra repos are disabled if options aren't set" do
-      allow(@new_resource).to receive(:options).and_return(nil)
+      @new_resource.options(nil)
       expect(@yum_cache).to receive(:disable_extra_repo_control)
       @provider.load_current_resource
     end
@@ -527,7 +527,7 @@ describe Chef::Provider::Package::Yum do
     end
 
     it "should run yum localinstall if given a path to an rpm" do
-      allow(@new_resource).to receive(:source).and_return("/tmp/emacs-21.4-20.el5.i386.rpm")
+      @new_resource.source("/tmp/emacs-21.4-20.el5.i386.rpm")
       expect(@provider).to receive(:yum_command).with(
         "-d0 -e0 -y localinstall /tmp/emacs-21.4-20.el5.i386.rpm"
       )
@@ -546,7 +546,7 @@ describe Chef::Provider::Package::Yum do
     end
 
     it "should run yum install with the package name, version and arch" do
-      allow(@new_resource).to receive(:arch).and_return("i386")
+      @new_resource.arch("i386")
       allow(Chef::Provider::Package::Yum::RPMUtils).to receive(:rpmvercmp).and_return(-1)
       @provider.load_current_resource
       expect(@provider).to receive(:yum_command).with(
@@ -558,7 +558,7 @@ describe Chef::Provider::Package::Yum do
     it "installs the package with the options given in the resource" do
       @provider.load_current_resource
       allow(@provider).to receive(:candidate_version).and_return("11")
-      allow(@new_resource).to receive(:options).and_return("--disablerepo epmd")
+      @new_resource.options("--disablerepo epmd")
       allow(Chef::Provider::Package::Yum::RPMUtils).to receive(:rpmvercmp).and_return(-1)
       expect(@provider).to receive(:yum_command).with(
         "-d0 -e0 -y --disablerepo epmd install cups-11"
@@ -584,7 +584,7 @@ describe Chef::Provider::Package::Yum do
     end
 
     it "should raise an exception if candidate version is older than the installed version and allow_downgrade is false" do
-      allow(@new_resource).to receive(:allow_downgrade).and_return(false)
+      @new_resource.allow_downgrade(false)
       @yum_cache = double(
         "Chef::Provider::Yum::YumCache",
         :reload_installed => true,
@@ -627,7 +627,7 @@ describe Chef::Provider::Package::Yum do
     end
 
     it "should run yum downgrade if candidate version is older than the installed version and allow_downgrade is true" do
-      allow(@new_resource).to receive(:allow_downgrade).and_return(true)
+      @new_resource.allow_downgrade(true)
       @yum_cache = double(
         "Chef::Provider::Yum::YumCache",
         :reload_installed => true,
@@ -651,7 +651,7 @@ describe Chef::Provider::Package::Yum do
     end
 
     it "should run yum install then flush the cache if :after is true" do
-      allow(@new_resource).to receive(:flush_cache).and_return({ :after => true, :before => false })
+      @new_resource.flush_cache({ :after => true, :before => false })
       @provider.load_current_resource
       allow(Chef::Provider::Package::Yum::RPMUtils).to receive(:rpmvercmp).and_return(-1)
       expect(@provider).to receive(:yum_command).with(
@@ -662,7 +662,7 @@ describe Chef::Provider::Package::Yum do
     end
 
     it "should run yum install then not flush the cache if :after is false" do
-      allow(@new_resource).to receive(:flush_cache).and_return({ :after => false, :before => false })
+      @new_resource.flush_cache({ :after => false, :before => false })
       @provider.load_current_resource
       allow(Chef::Provider::Package::Yum::RPMUtils).to receive(:rpmvercmp).and_return(-1)
       expect(@provider).to receive(:yum_command).with(
@@ -758,7 +758,7 @@ describe Chef::Provider::Package::Yum do
     end
 
     it "should run yum remove with the package name and arch" do
-      allow(@new_resource).to receive(:arch).and_return("x86_64")
+      @new_resource.arch("x86_64")
       expect(@provider).to receive(:yum_command).with(
         "-d0 -e0 -y remove emacs-1.0.x86_64"
       )
@@ -2145,8 +2145,8 @@ describe "Chef::Provider::Package::Yum - Multi" do
 
   describe "when evaluating the correctness of the resource" do
     it "raises an error if the array lengths of package name, arch, and version do not match up" do
-      allow(@new_resource).to receive(:version).and_return(["1.1"])
-      allow(@new_resource).to receive(:arch).and_return(%w{x86_64 i386 i686})
+      @new_resource.version(["1.1"])
+      @new_resource.arch(%w{x86_64 i386 i686})
       expect { @provider.check_resource_semantics! }.to raise_error(Chef::Exceptions::InvalidResourceSpecification)
     end
   end
@@ -2245,7 +2245,7 @@ describe "Chef::Provider::Package::Yum - Multi" do
 
     it "should run yum install with the package name, version and arch" do
       @provider.load_current_resource
-      allow(@new_resource).to receive(:arch).and_return(%w{i386 i386})
+      @new_resource.arch(%w{i386 i386})
       allow(Chef::Provider::Package::Yum::RPMUtils).to receive(:rpmvercmp).and_return(-1)
       expect(@provider).to receive(:yum_command).with(
         "-d0 -e0 -y install cups-1.2.4-11.19.el5.i386 vim-1.0.i386"
@@ -2261,7 +2261,7 @@ describe "Chef::Provider::Package::Yum - Multi" do
       expect(@provider).to receive(:yum_command).with(
         "-d0 -e0 -y --disablerepo epmd install cups-1.2.4-11.19.el5 vim-1.0"
       )
-      allow(@new_resource).to receive(:options).and_return("--disablerepo epmd")
+      @new_resource.options("--disablerepo epmd")
       @provider.install_package(%w{cups vim}, ["1.2.4-11.19.el5", "1.0"])
     end
 

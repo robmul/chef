@@ -75,16 +75,7 @@ class Chef
 
           LWRPBase.loaded_lwrps[filename] = true
 
-          Chef::Provider.register_deprecated_lwrp_class(provider_class, convert_to_class_name(resource_name))
-
           provider_class
-        end
-
-        # DSL for defining a provider's actions.
-        def action(name, &block)
-          define_method("action_#{name}") do
-            instance_eval(&block)
-          end
         end
 
         protected

@@ -17,7 +17,6 @@
 #
 
 require "chef/mixin/shell_out"
-require "chef/mixin/command"
 require "chef/mixin/subclass_directive"
 require "chef/log"
 require "chef/file_cache"
@@ -28,11 +27,8 @@ require "shellwords"
 class Chef
   class Provider
     class Package < Chef::Provider
-      include Chef::Mixin::Command
       include Chef::Mixin::ShellOut
       extend Chef::Mixin::SubclassDirective
-
-      use_inline_resources
 
       # subclasses declare this if they want all their arguments as arrays of packages and names
       subclass_directive :use_multipackage_api
@@ -54,15 +50,7 @@ class Chef
       end
 
       def options
-        if new_resource.options.is_a?(String)
-          new_resource.options.shellsplit
-        else
-          new_resource.options
-        end
-      end
-
-      def whyrun_supported?
-        true
+        new_resource.options
       end
 
       def check_resource_semantics!
@@ -309,7 +297,11 @@ class Chef
       def expand_options(options)
         # its deprecated but still work to do to deprecate it fully
         #Chef.deprecated(:package_misc, "expand_options is deprecated, use shell_out_compact or shell_out_compact_timeout instead")
-        options ? " #{options}" : ""
+        if options
+          " #{options.is_a?(Array) ? Shellwords.join(options) : options}"
+        else
+          ""
+        end
       end
 
       # Check the current_version against either the candidate_version or the new_version

@@ -4,7 +4,11 @@ begin
 
   namespace :changelog do
     # Fetch the latest version from mixlib-install
-    latest_stable_version = Mixlib::Install.available_versions("chef", "stable").last
+    def latest_stable_version
+      # for 13.1, a 12.20 release was made after 13.0, which is busting the changelog generator. Reset this post 13.1 release
+      "13.0.118"
+      # Mixlib::Install.available_versions("chef", "stable").last
+    end
 
     # Take the changelog from the latest stable release and put it into history.
     task :archive do

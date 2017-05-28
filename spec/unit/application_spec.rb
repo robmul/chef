@@ -1,7 +1,7 @@
 #
 # Author:: AJ Christensen (<aj@junglist.gen.nz>)
 # Author:: Mark Mzyk (mmzyk@chef.io)
-# Copyright:: Copyright 2008-2016, Chef Software Inc.
+# Copyright:: Copyright 2008-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -187,53 +187,56 @@ describe Chef::Application do
         allow(Chef::Log).to receive(:level=)
         @monologger = double("Monologger")
         expect(MonoLogger).to receive(:new).with(Chef::Config[:log_location]).and_return(@monologger)
+        allow(MonoLogger).to receive(:new).with(STDOUT).and_return(@monologger)
+        allow(@monologger).to receive(:formatter=).with(Chef::Log.logger.formatter)
         expect(Chef::Log).to receive(:init).with(@monologger)
         @app.configure_logging
       end
 
       shared_examples_for "log_level_is_auto" do
-        context "when STDOUT is to a tty" do
+        before do
+          allow(STDOUT).to receive(:tty?).and_return(true)
+        end
+
+        it "configures the log level to :warn" do
+          @app.configure_logging
+          expect(Chef::Log.level).to eq(:warn)
+        end
+
+        context "when force_formater is configured" do
           before do
-            allow(STDOUT).to receive(:tty?).and_return(true)
+            Chef::Config[:force_formatter] = true
           end
 
-          it "configures the log level to :warn" do
+          it "configures the log level to warn" do
             @app.configure_logging
             expect(Chef::Log.level).to eq(:warn)
           end
-
-          context "when force_logger is configured" do
-            before do
-              Chef::Config[:force_logger] = true
-            end
-
-            it "configures the log level to info" do
-              @app.configure_logging
-              expect(Chef::Log.level).to eq(:info)
-            end
-          end
         end
 
-        context "when STDOUT is not to a tty" do
+        context "when force_logger is configured" do
           before do
-            allow(STDOUT).to receive(:tty?).and_return(false)
+            Chef::Config[:force_logger] = true
           end
 
-          it "configures the log level to :info" do
+          it "configures the log level to info" do
             @app.configure_logging
             expect(Chef::Log.level).to eq(:info)
           end
+        end
 
-          context "when force_formatter is configured" do
-            before do
-              Chef::Config[:force_formatter] = true
-            end
-            it "sets the log level to :warn" do
-              @app.configure_logging
-              expect(Chef::Log.level).to eq(:warn)
-            end
+        context "when both are is configured" do
+          before do
+            Chef::Config[:force_logger] = true
+            Chef::Config[:force_formatter] = true
+          end
+
+          it "configures the log level to warn" do
+            @app.configure_logging
+            expect(Chef::Log.level).to eq(:warn)
           end
         end
+
       end
 
       context "when log_level is not set" do
@@ -299,16 +302,23 @@ describe Chef::Application do
       Chef::Application.fatal! "blah"
     end
 
-    describe "when an exit code is supplied" do
+    describe "when a standard exit code is supplied" do
       it "should exit with the given exit code" do
-        expect(Process).to receive(:exit).with(-100).and_return(true)
+        expect(Process).to receive(:exit).with(42).and_return(true)
+        Chef::Application.fatal! "blah", 42
+      end
+    end
+
+    describe "when a non-standard exit code is supplied" do
+      it "should exit with the default exit code" do
+        expect(Process).to receive(:exit).with(1).and_return(true)
         Chef::Application.fatal! "blah", -100
       end
     end
 
     describe "when an exit code is not supplied" do
       it "should exit with the default exit code" do
-        expect(Process).to receive(:exit).with(-1).and_return(true)
+        expect(Process).to receive(:exit).with(1).and_return(true)
         Chef::Application.fatal! "blah"
       end
     end

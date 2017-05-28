@@ -338,6 +338,10 @@ class Chef
       automatic[:platform_version] = version
     end
 
+    def consume_ohai_data(ohai_data)
+      self.automatic_attrs = Chef::Mixin::DeepMerge.merge(automatic_attrs, ohai_data)
+    end
+
     # Consumes the combined run_list and other attributes in +attrs+
     def consume_attributes(attrs)
       normal_attrs_to_merge = consume_run_list(attrs)
@@ -506,12 +510,6 @@ class Chef
       self.default_attrs = o.default_attrs
       chef_environment(o.chef_environment)
       self
-    end
-
-    # Create a Chef::Node from JSON
-    def self.json_create(o)
-      Chef.deprecated(:json_auto_inflate, "Auto inflation of JSON data is deprecated. Please use Chef::Node#from_hash")
-      from_hash(o)
     end
 
     def self.from_hash(o)

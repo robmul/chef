@@ -1,7 +1,7 @@
 #
 # Author:: Adam Jacob (<adam@chef.io>)
 # Author:: Tyler Cloke (<tyler@chef.io>)
-# Copyright:: Copyright 2008-2016, Chef Software Inc.
+# Copyright:: Copyright 2008-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,7 +61,12 @@ describe Chef::Resource::Package do
 
   it "should accept a string for the options" do
     @resource.options "something"
-    expect(@resource.options).to eql("something")
+    expect(@resource.options).to eql(["something"])
+  end
+
+  it "should split options" do
+    @resource.options "-a -b 'arg with spaces' -b \"and quotes\""
+    expect(@resource.options).to eql(["-a", "-b", "arg with spaces", "-b", "and quotes"])
   end
 
   describe "when it has a package_name and version" do
@@ -72,9 +77,9 @@ describe Chef::Resource::Package do
     end
 
     it "describes its state" do
-      state = @resource.state
+      state = @resource.state_for_resource_reporter
       expect(state[:version]).to eq("10.9.8")
-      expect(state[:options]).to eq("-al")
+      expect(state[:options]).to eq(["-al"])
     end
 
     it "returns the file path as its identity" do

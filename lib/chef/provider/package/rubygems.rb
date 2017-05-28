@@ -19,9 +19,9 @@
 
 require "uri"
 require "chef/provider/package"
-require "chef/mixin/command"
 require "chef/resource/package"
 require "chef/mixin/get_source_from_package"
+require "chef/mixin/which"
 
 # Class methods on Gem are defined in rubygems
 require "rubygems"
@@ -360,6 +360,7 @@ class Chef
         provides :gem_package
 
         include Chef::Mixin::GetSourceFromPackage
+        include Chef::Mixin::Which
 
         def initialize(new_resource, run_context = nil)
           super
@@ -411,11 +412,7 @@ class Chef
         end
 
         def find_gem_by_path
-          Chef::Log.debug("#{new_resource} searching for 'gem' binary in path: #{ENV['PATH']}")
-          separator = ::File::ALT_SEPARATOR ? ::File::ALT_SEPARATOR : ::File::SEPARATOR
-          path_to_first_gem = ENV["PATH"].split(::File::PATH_SEPARATOR).find { |path| ::File.exist?(path + separator + "gem") }
-          raise Chef::Exceptions::FileNotFound, "Unable to find 'gem' binary in path: #{ENV['PATH']}" if path_to_first_gem.nil?
-          path_to_first_gem + separator + "gem"
+          which("gem", extra_path: RbConfig::CONFIG["bindir"])
         end
 
         def gem_dependency
@@ -424,6 +421,7 @@ class Chef
 
         def source_is_remote?
           return true if new_resource.source.nil?
+          return true if new_resource.source.is_a?(Array)
           scheme = URI.parse(new_resource.source).scheme
           # URI.parse gets confused by MS Windows paths with forward slashes.
           scheme = nil if scheme =~ /^[a-z]$/
@@ -470,7 +468,9 @@ class Chef
         end
 
         def gem_sources
-          new_resource.source ? Array(new_resource.source) : nil
+          srcs = [ new_resource.source ]
+          srcs << Chef::Config[:rubygems_url] if new_resource.include_default_source
+          srcs.flatten.compact
         end
 
         def load_current_resource
@@ -534,18 +534,18 @@ class Chef
         end
 
         def install_via_gem_command(name, version)
-          if new_resource.source =~ /\.gem$/i
+          src = []
+          if new_resource.source.is_a?(String) && new_resource.source =~ /\.gem$/i
             name = new_resource.source
-          elsif new_resource.clear_sources
-            src = " --clear-sources"
-            src << (new_resource.source && " --source=#{new_resource.source}" || "")
           else
-            src = new_resource.source && " --source=#{new_resource.source} --source=#{Chef::Config[:rubygems_url]}"
+            src << "--clear-sources" if new_resource.clear_sources
+            src += gem_sources.map { |s| "--source=#{s}" }
           end
+          src_str = src.empty? ? "" : " #{src.join(" ")}"
           if !version.nil? && !version.empty?
-            shell_out_with_timeout!("#{gem_binary_path} install #{name} -q --no-rdoc --no-ri -v \"#{version}\"#{src}#{opts}", env: nil)
+            shell_out_with_timeout!("#{gem_binary_path} install #{name} -q --no-rdoc --no-ri -v \"#{version}\"#{src_str}#{opts}", env: nil)
           else
-            shell_out_with_timeout!("#{gem_binary_path} install \"#{name}\" -q --no-rdoc --no-ri #{src}#{opts}", env: nil)
+            shell_out_with_timeout!("#{gem_binary_path} install \"#{name}\" -q --no-rdoc --no-ri #{src_str}#{opts}", env: nil)
           end
         end
 

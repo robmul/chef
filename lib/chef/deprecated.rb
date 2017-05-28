@@ -218,6 +218,36 @@ class Chef
       end
     end
 
+    class MultiresourceMatch < Base
+      def id
+        16
+      end
+
+      def target
+        "multiresource_match.html"
+      end
+    end
+
+    class UseInlineResources < Base
+      def id
+        17
+      end
+
+      def target
+        "use_inline_resources.html"
+      end
+    end
+
+    class LocalListen < Base
+      def id
+        18
+      end
+
+      def target
+        "local_listen.html"
+      end
+    end
+
     # id 3694 was deleted
 
     class Generic < Base

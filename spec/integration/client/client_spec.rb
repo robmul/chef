@@ -294,10 +294,9 @@ chef_server_url 'http://omg.com/blah'
 cookbook_path "#{path_to('cookbooks')}"
 EOM
 
-      result = shell_out("#{chef_client} -c \"#{path_to('config/client.rb')}\" -r 'x::default' -z", :cwd => chef_dir)
+      result = shell_out("#{chef_client} -c \"#{path_to('config/client.rb')}\" -r 'x::default' -z -l info", :cwd => chef_dir)
       expect(result.stdout).not_to include("Overridden Run List")
       expect(result.stdout).to include("Run List is [recipe[x::default]]")
-      #puts result.stdout
       result.error!
     end
 
@@ -307,6 +306,7 @@ local_mode true
 cookbook_path "#{path_to('cookbooks')}"
 EOM
       result = shell_out!("#{chef_client} -c \"#{path_to('config/client.rb')}\" -o 'x::default' -z --profile-ruby", :cwd => chef_dir)
+      result.error!
       expect(File.exist?(path_to("config/local-mode-cache/cache/graph_profile.out"))).to be true
     end
 
@@ -316,6 +316,7 @@ local_mode true
 cookbook_path "#{path_to('cookbooks')}"
 EOM
       result = shell_out!("#{chef_client} -c \"#{path_to('config/client.rb')}\" -o 'x::default' -z", :cwd => chef_dir)
+      result.error!
       expect(File.exist?(path_to("config/local-mode-cache/cache/graph_profile.out"))).to be false
     end
   end
@@ -388,18 +389,8 @@ EOM
   when_the_repository "has a cookbook that generates deprecation warnings" do
     before do
       file "cookbooks/x/recipes/default.rb", <<-EOM
-        class ::MyResource < Chef::Resource
-          use_automatic_resource_name
-          property :x, default: []
-          property :y, default: {}
-        end
-
-        my_resource 'blah' do
-          1.upto(10) do
-            x nil
-          end
-          x nil
-        end
+        Chef.deprecated(:internal_api, "Test deprecation")
+        Chef.deprecated(:internal_api, "Test deprecation")
       EOM
     end
 
@@ -432,7 +423,7 @@ EOM
       expect(run_complete).to be >= 0
 
       # Make sure there is exactly one result for each, and that it occurs *after* the complete message.
-      expect(match_indices(/An attempt was made to change x from \[\] to nil by calling x\(nil\). In Chef 12, this does a get rather than a set. In Chef 13, this will change to set the value to nil./, result.stdout)).to match([ be > run_complete ])
+      expect(match_indices(/Test deprecation/, result.stdout)).to match([ be > run_complete ])
     end
   end
 
@@ -455,7 +446,7 @@ control_group "control group without top level control" do
 end
       RECIPE
 
-      result = shell_out("#{chef_client} -c \"#{path_to('config/client.rb')}\" -o 'audit_test::succeed'", :cwd => chef_dir)
+      result = shell_out("#{chef_client} -c \"#{path_to('config/client.rb')}\" -o 'audit_test::succeed' -l info", :cwd => chef_dir)
       expect(result.error?).to be_falsey
       expect(result.stdout).to include("Successfully executed all `control_group` blocks and contained examples")
     end
@@ -472,6 +463,69 @@ end
       result = shell_out("#{chef_client} -c \"#{path_to('config/client.rb')}\" -o 'audit_test::fail'", :cwd => chef_dir)
       expect(result.error?).to be_truthy
       expect(result.stdout).to include("Failure/Error: expect(2 - 2).to eq(1)")
+    end
+  end
+
+  when_the_repository "has a cookbook that deploys a file" do
+    before do
+      file "cookbooks/x/recipes/default.rb", <<-RECIPE
+cookbook_file #{path_to('tempfile.txt').inspect} do
+  source "my_file"
+end
+      RECIPE
+
+      file "cookbooks/x/files/my_file", <<-FILE
+this is my file
+      FILE
+    end
+
+    [true, false].each do |lazy|
+      context "with no_lazy_load set to #{lazy}" do
+        it "should create the file" do
+          file "config/client.rb", <<EOM
+no_lazy_load #{lazy}
+local_mode true
+cookbook_path "#{path_to('cookbooks')}"
+EOM
+          result = shell_out("#{chef_client} -l debug -c \"#{path_to('config/client.rb')}\" -o 'x::default' --no-fork", :cwd => chef_dir)
+          result.error!
+
+          expect(IO.read(path_to("tempfile.txt")).strip).to eq("this is my file")
+        end
+      end
+    end
+  end
+
+  when_the_repository "has a cookbook with an ohai plugin" do
+    before do
+      file "cookbooks/x/recipes/default.rb", <<-RECIPE
+file #{path_to('tempfile.txt').inspect} do
+  content node["english"]["version"]
+end
+      RECIPE
+
+      file "cookbooks/x/ohai/english.rb", <<-OHAI
+        Ohai.plugin(:English) do
+          provides 'english'
+
+          collect_data do
+            english Mash.new
+            english[:version] = "2014"
+          end
+        end
+      OHAI
+
+      file "config/client.rb", <<EOM
+local_mode true
+cookbook_path "#{path_to('cookbooks')}"
+EOM
+    end
+
+    it "should run the ohai plugin" do
+      result = shell_out("#{chef_client} -l debug -c \"#{path_to('config/client.rb')}\" -o 'x::default' --no-fork", :cwd => chef_dir)
+      result.error!
+
+      expect(IO.read(path_to("tempfile.txt"))).to eq("2014")
     end
   end
 
@@ -530,6 +584,44 @@ EOM
     it "a chef-solo run should succeed" do
       command = shell_out("#{chef_solo} -c \"#{path_to('config/client.rb')}\" -o 'x::default' --no-fork", :cwd => chef_dir)
       command.error!
+    end
+  end
+
+  when_the_repository "has a cookbook that logs at the info level" do
+    before do
+      file "cookbooks/x/recipes/default.rb", <<EOM
+      log "info level" do
+        level :info
+      end
+EOM
+      file "config/client.rb", <<EOM
+local_mode true
+cookbook_path "#{path_to('cookbooks')}"
+EOM
+    end
+
+    it "a chef client run should not log to info by default" do
+      command = shell_out("#{chef_client} -c \"#{path_to('config/client.rb')}\" -o 'x::default' --no-fork", :cwd => chef_dir)
+      command.error!
+      expect(command.stdout).not_to include("INFO")
+    end
+
+    it "a chef client run to a pipe should not log to info by default" do
+      command = shell_out("#{chef_client} -c \"#{path_to('config/client.rb')}\" -o 'x::default' --no-fork | tee #{path_to('chefrun.out')}", :cwd => chef_dir)
+      command.error!
+      expect(command.stdout).not_to include("INFO")
+    end
+
+    it "a chef solo run should not log to info by default" do
+      command = shell_out("#{chef_solo} -c \"#{path_to('config/client.rb')}\" -o 'x::default' --no-fork", :cwd => chef_dir)
+      command.error!
+      expect(command.stdout).not_to include("INFO")
+    end
+
+    it "a chef solo run to a pipe should not log to info by default" do
+      command = shell_out("#{chef_solo} -c \"#{path_to('config/client.rb')}\" -o 'x::default' --no-fork | tee #{path_to('chefrun.out')}", :cwd => chef_dir)
+      command.error!
+      expect(command.stdout).not_to include("INFO")
     end
   end
 end

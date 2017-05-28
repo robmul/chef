@@ -1,6 +1,6 @@
 #
 # Author:: Adam Jacob (<adam@chef.io>)
-# Copyright:: Copyright 2009-2016, Chef Software Inc.
+# Copyright:: Copyright 2009-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -223,7 +223,7 @@ class Chef
         end
 
         @search_count = 0
-        query.search(:node, @name_args[0], filter_result: required_attributes) do |item|
+        query.search(:node, @name_args[0], filter_result: required_attributes, fuzz: true) do |item|
           @search_count += 1
           # we should skip the loop to next iteration if the item
           # returned by the search is nil
@@ -331,18 +331,22 @@ class Chef
         command = fixup_sudo(command)
         command.force_encoding("binary") if command.respond_to?(:force_encoding)
         subsession.open_channel do |chan|
-          chan.request_pty
-          chan.exec command do |ch, success|
-            raise ArgumentError, "Cannot execute #{command}" unless success
-            ch.on_data do |ichannel, data|
-              print_data(ichannel[:host], data)
-              if data =~ /^knife sudo password: /
-                print_data(ichannel[:host], "\n")
-                ichannel.send_data("#{get_password}\n")
+          if config[:on_error] && exit_status != 0
+            chan.close()
+          else
+            chan.request_pty
+            chan.exec command do |ch, success|
+              raise ArgumentError, "Cannot execute #{command}" unless success
+              ch.on_data do |ichannel, data|
+                print_data(ichannel[:host], data)
+                if data =~ /^knife sudo password: /
+                  print_data(ichannel[:host], "\n")
+                  ichannel.send_data("#{get_password}\n")
+                end
               end
-            end
-            ch.on_request "exit-status" do |ichannel, data|
-              exit_status = [exit_status, data.read_long].max
+              ch.on_request "exit-status" do |ichannel, data|
+                exit_status = [exit_status, data.read_long].max
+              end
             end
           end
         end

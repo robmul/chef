@@ -74,12 +74,6 @@ describe Chef::Recipe do
         expect { recipe.not_home("not_home_resource") }.to raise_error(NameError)
       end
 
-      it "should require a name argument" do
-        expect do
-          recipe.cat
-        end.to raise_error(ArgumentError)
-      end
-
       it "should allow regular errors (not NameErrors) to pass unchanged" do
         expect do
           recipe.cat("felix") { raise ArgumentError, "You Suck" }
@@ -253,13 +247,6 @@ describe Chef::Recipe do
         expect(run_context.resource_collection.count).to eql(2)
       end
 
-      it "does not insert two resources if create_if_missing is used" do
-        zm_resource
-        Chef::Config[:treat_deprecation_warnings_as_errors] = false
-        recipe.declare_resource(:zen_master, "klopp", create_if_missing: true)
-        expect(run_context.resource_collection.count).to eql(1)
-      end
-
       context "injecting a different run_context" do
         let(:run_context2) do
           events = Chef::EventDispatch::Dispatcher.new
@@ -314,7 +301,7 @@ describe Chef::Recipe do
       it "gives a sane error message when using method_missing" do
         expect do
           recipe.no_such_resource("foo")
-        end.to raise_error(NoMethodError, %q{No resource or method named `no_such_resource' for `Chef::Recipe "test"'})
+        end.to raise_error(NoMethodError, /undefined method `no_such_resource' for cookbook: hjk, recipe: test :Chef::Recipe/)
       end
 
       it "gives a sane error message when using method_missing 'bare'" do
@@ -323,7 +310,7 @@ describe Chef::Recipe do
             # Giving an argument will change this from NameError to NoMethodError
             no_such_resource
           end
-        end.to raise_error(NameError, %q{No resource, method, or local variable named `no_such_resource' for `Chef::Recipe "test"'})
+        end.to raise_error(NameError, /undefined local variable or method `no_such_resource' for cookbook: hjk, recipe: test :Chef::Recipe/)
       end
 
       it "gives a sane error message when using build_resource" do

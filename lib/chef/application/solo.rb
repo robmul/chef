@@ -23,7 +23,6 @@ require "chef/client"
 require "chef/config"
 require "chef/daemon"
 require "chef/log"
-require "chef/rest"
 require "chef/config_fetcher"
 require "fileutils"
 require "chef/mixin/shell_out"
@@ -258,6 +257,7 @@ class Chef::Application::Solo < Chef::Application
       end
 
       Chef::Config[:local_mode] = true
+      Chef::Config[:listen] = false
     else
       configure_legacy_mode!
     end

@@ -18,7 +18,6 @@
 
 require "chef/provider/service"
 require "chef/resource/service"
-require "chef/mixin/command"
 
 class Chef
   class Provider
@@ -39,10 +38,6 @@ class Chef
           determine_current_status!
 
           @current_resource
-        end
-
-        def whyrun_supported?
-          true
         end
 
         def shared_resource_requirements

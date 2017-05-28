@@ -42,7 +42,6 @@ class Chef
         @cwd = nil
         @environment = nil
         @group = nil
-        @path = nil
         @returns = 0
         @timeout = nil
         @user = nil
@@ -131,13 +130,7 @@ class Chef
 
       property :password, String, sensitive: true
 
-      def sensitive(args = nil)
-        if password
-          true
-        else
-          super
-        end
-      end
+      property :sensitive, [ TrueClass, FalseClass ], default: false, coerce: proc { |x| password ? true : x }
 
       def self.set_guard_inherited_attributes(*inherited_attributes)
         @class_inherited_attributes = inherited_attributes

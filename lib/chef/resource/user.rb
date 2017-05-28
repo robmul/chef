@@ -62,19 +62,21 @@ class Chef
         )
       end
 
-      def uid(arg = nil)
+      def uid(arg = Chef::NOT_PASSED)
         set_or_return(
           :uid,
           arg,
-          :kind_of => [ String, Integer ]
+          :kind_of => [ String, Integer, NilClass ],
+          :coerce => proc { |x| x || nil }
         )
       end
 
-      def gid(arg = nil)
+      def gid(arg = Chef::NOT_PASSED)
         set_or_return(
           :gid,
           arg,
-          :kind_of => [ String, Integer ]
+          :kind_of => [ String, Integer, NilClass ],
+          :coerce => proc { |x| x || nil }
         )
       end
 
@@ -150,10 +152,6 @@ class Chef
           arg,
           :kind_of => [ TrueClass, FalseClass ]
         )
-      end
-
-      def supports(args = {})
-        raise Chef::Exceptions::User, "calling supports on a user resource is no longer supported in Chef-13, you probably need to use the manage_home or non_unique properties directly"
       end
     end
   end

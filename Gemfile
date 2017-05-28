@@ -1,7 +1,3 @@
-# This buys us the ability to be included in other Gemfiles
-require_relative "tasks/gemfile_util"
-extend GemfileUtil
-
 source "https://rubygems.org"
 
 # Note we do not use the gemspec DSL which restricts to the
@@ -11,18 +7,17 @@ source "https://rubygems.org"
 # of bundler versions prior to 1.12.0 (https://github.com/bundler/bundler/commit/193a14fe5e0d56294c7b370a0e59f93b2c216eed)
 gem "chef", path: "."
 
-# tracking master of ohai for chef-13.0 development, this should be able to be deleted after release
-gem "ohai", git: "https://github.com/chef/ohai.git"
+gem "ohai", "~> 13"
 
 gem "chef-config", path: File.expand_path("../chef-config", __FILE__) if File.exist?(File.expand_path("../chef-config", __FILE__))
-gem "rake"
-gem "bundler"
-gem "cheffish" # required for rspec tests
+gem "cheffish", "~> 13" # required for rspec tests
 
 group(:omnibus_package) do
   gem "appbundler"
   gem "rb-readline"
-  gem "nokogiri"
+  gem "inspec"
+  # nokogiri has no ruby-2.4 version for windows so it cannot go into our Gemfile.lock
+  #  gem "nokogiri", ">= 1.7.1"
 end
 
 group(:omnibus_package, :pry) do
@@ -30,23 +25,6 @@ group(:omnibus_package, :pry) do
   gem "pry-byebug"
   gem "pry-remote"
   gem "pry-stack_explorer"
-end
-
-# These are used for external tests
-group(:integration) do
-  gem "chef-provisioning"
-  gem "chef-sugar"
-  gem "chefspec"
-  gem "halite", git: "https://github.com/poise/halite.git"
-  gem "poise", git: "https://github.com/poise/poise.git"
-  gem "poise-boiler", git: "https://github.com/poise/poise-boiler.git"
-  gem "knife-windows"
-  gem "foodcritic"
-
-  # We pin this so nobody brings in a cucumber-core incompatible with cucumber latest
-  gem "cucumber", ">= 2.4.0"
-  # We pin oc-chef-pedant to prevent it from updating out of lockstep with chef-zero
-  gem "oc-chef-pedant", git: "https://github.com/chef/chef-server"
 end
 
 group(:docgen) do
@@ -62,17 +40,17 @@ group(:maintenance, :ci) do
 end
 
 # Everything except AIX
-group(:linux, :bsd, :mac_os_x, :solaris, :windows) do
-  # may need to disable this in insolation on fussy builds like AIX, RHEL4, etc
+group(:ruby_prof) do
   gem "ruby-prof"
 end
 
 # Everything except AIX and Windows
-group(:linux, :bsd, :mac_os_x, :solaris) do
+group(:ruby_shadow) do
   gem "ruby-shadow", platforms: :ruby
 end
 
 group(:development, :test) do
+  gem "rake"
   gem "simplecov"
 
   # for testing new chefstyle rules
@@ -94,5 +72,5 @@ end
 instance_eval(ENV["GEMFILE_MOD"]) if ENV["GEMFILE_MOD"]
 
 # If you want to load debugging tools into the bundle exec sandbox,
-# add these additional dependencies into chef/Gemfile.local
-eval(IO.read(__FILE__ + ".local"), binding) if File.exist?(__FILE__ + ".local")
+# add these additional dependencies into Gemfile.local
+eval_gemfile(__FILE__ + ".local") if File.exist?(__FILE__ + ".local")

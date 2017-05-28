@@ -70,6 +70,9 @@ require "chef/chef_fs/file_system_cache"
 
 require "chef/api_client_v1"
 
+require "chef/mixin/versioned_api"
+require "chef/server_api_versions"
+
 if ENV["CHEF_FIPS"] == "1"
   Chef::Config.init_openssl
 end
@@ -178,6 +181,8 @@ RSpec.configure do |config|
   # these let us use chef: ">= 13" or ruby: "~> 2.0.0" or any other Gem::Dependency-style constraint
   config.filter_run_excluding chef: DependencyProc.with(Chef::VERSION)
   config.filter_run_excluding ruby: DependencyProc.with(RUBY_VERSION)
+
+  config.filter_run_excluding :choco_installed => true unless choco_installed?
 
   running_platform_arch = `uname -m`.strip unless windows?
 

@@ -17,14 +17,12 @@
 #
 
 require "chef/log"
-require "chef/mixin/command"
 require "chef/provider"
 require "ipaddr"
 
 class Chef
   class Provider
     class Route < Chef::Provider
-      include Chef::Mixin::Command
 
       provides :route
 
@@ -82,10 +80,6 @@ class Chef
           Chef::Log.debug("Invalid IP address data: hex=#{hex_ip}, ip=#{ip}")
           return nil
         end
-      end
-
-      def whyrun_supported?
-        true
       end
 
       def load_current_resource

@@ -1,6 +1,6 @@
 #
 # Author:: AJ Christensen (<aj@chef.io>)
-# Copyright:: Copyright 2008-2016, Chef Software Inc.
+# Copyright:: Copyright 2008-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,14 @@
 
 require "chef/provider"
 require "chef/mixin/shell_out"
-require "chef/mixin/command"
 require "etc"
 
 class Chef
   class Provider
     class Group < Chef::Provider
       include Chef::Mixin::ShellOut
-      include Chef::Mixin::Command
       attr_accessor :group_exists
       attr_accessor :change_desc
-
-      def whyrun_supported?
-        true
-      end
 
       def initialize(new_resource, run_context)
         super

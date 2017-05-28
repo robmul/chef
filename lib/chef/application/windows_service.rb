@@ -1,6 +1,6 @@
 #
 # Author:: Christopher Maier (<maier@lambda.local>)
-# Copyright:: Copyright 2011-2016, Chef Software, Inc.
+# Copyright:: Copyright 2011-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -256,13 +256,13 @@ class Chef
       # Based on config and whether or not STDOUT is a tty, should we setup a
       # secondary logger for stdout?
       def want_additional_logger?
-        ( Chef::Config[:log_location] != STDOUT ) && STDOUT.tty? && (!Chef::Config[:daemonize]) && (Chef::Config[:force_logger])
+        ( Chef::Config[:log_location] != STDOUT ) && STDOUT.tty? && !Chef::Config[:daemonize]
       end
 
       # Use of output formatters is assumed if `force_formatter` is set or if
-      # `force_logger` is not set and STDOUT is to a console (tty)
+      # `force_logger` is not set
       def using_output_formatter?
-        Chef::Config[:force_formatter] || (!Chef::Config[:force_logger] && STDOUT.tty?)
+        Chef::Config[:force_formatter] || !Chef::Config[:force_logger]
       end
 
       def auto_log_level?
@@ -318,11 +318,11 @@ class Chef
 
           Chef::Config.merge!(config)
         rescue SocketError
-          Chef::Application.fatal!("Error getting config file #{Chef::Config[:config_file]}", Chef::Exceptions::DeprecatedExitCode.new)
+          Chef::Application.fatal!("Error getting config file #{Chef::Config[:config_file]}")
         rescue Chef::Exceptions::ConfigurationError => error
-          Chef::Application.fatal!("Error processing config file #{Chef::Config[:config_file]} with error #{error.message}", Chef::Exceptions::DeprecatedExitCode.new)
+          Chef::Application.fatal!("Error processing config file #{Chef::Config[:config_file]} with error #{error.message}")
         rescue Exception => error
-          Chef::Application.fatal!("Unknown error processing config file #{Chef::Config[:config_file]} with error #{error.message}", Chef::Exceptions::DeprecatedExitCode.new)
+          Chef::Application.fatal!("Unknown error processing config file #{Chef::Config[:config_file]} with error #{error.message}")
         end
       end
 

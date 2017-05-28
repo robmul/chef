@@ -1,6 +1,6 @@
 
 # Author:: Adam Jacob (<adam@chef.io>)
-# Copyright:: Copyright 2008-2017, Chef Software, Inc.
+# Copyright:: Copyright 2008-2017, Chef Software Inc.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ class Chef
       class Yum < Chef::Provider::Package
         include Chef::Mixin::GetSourceFromPackage
 
-        provides :package, platform_family: %w{rhel fedora}
+        provides :package, platform_family: %w{rhel fedora amazon}
         provides :yum_package, os: "linux"
 
         # Multipackage API
@@ -194,7 +194,7 @@ class Chef
         def manage_extra_repo_control
           if new_resource.options
             repo_control = []
-            new_resource.options.split.each do |opt|
+            new_resource.options.each do |opt|
               repo_control << opt if opt =~ /--(enable|disable)repo=.+/
             end
 

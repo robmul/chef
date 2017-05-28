@@ -129,10 +129,16 @@ shared_context "a client run" do
     # ---Client#sync_cookbooks -- downloads the list of cookbooks to sync
     #
     expect_any_instance_of(Chef::CookbookSynchronizer).to receive(:sync_cookbooks)
-    expect(Chef::ServerAPI).to receive(:new).with(Chef::Config[:chef_server_url]).and_return(http_cookbook_sync)
+    expect(Chef::ServerAPI).to receive(:new).with(Chef::Config[:chef_server_url], version_class: Chef::CookbookManifestVersions).and_return(http_cookbook_sync)
     expect(http_cookbook_sync).to receive(:post).
       with("environments/_default/cookbook_versions", { :run_list => [] }).
       and_return({})
+  end
+
+  def stub_for_required_recipe
+    response = Net::HTTPNotFound.new("1.1", "404", "Not Found")
+    exception = Net::HTTPServerException.new('404 "Not Found"', response)
+    expect(http_node_load).to receive(:get).with("required_recipe").and_raise(exception)
   end
 
   def stub_for_converge
@@ -165,6 +171,7 @@ shared_context "a client run" do
     stub_for_data_collector_init
     stub_for_node_load
     stub_for_sync_cookbooks
+    stub_for_required_recipe
     stub_for_converge
     stub_for_audit
     stub_for_node_save

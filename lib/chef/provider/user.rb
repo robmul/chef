@@ -17,13 +17,11 @@
 #
 
 require "chef/provider"
-require "chef/mixin/command"
 require "etc"
 
 class Chef
   class Provider
     class User < Chef::Provider
-      include Chef::Mixin::Command
 
       attr_accessor :user_exists, :locked
 
@@ -41,10 +39,6 @@ class Chef
         end
       rescue ArgumentError
         @group_name_resolved = false
-      end
-
-      def whyrun_supported?
-        true
       end
 
       def load_current_resource
